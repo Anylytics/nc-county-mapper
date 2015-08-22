@@ -1,7 +1,5 @@
 // Now we've configured RequireJS, we can load our dependencies and start
-define([ 'ractive', 'rv!../ractive/template'], function ( Ractive, html) {
-
-
+define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html,mapbox) {
 
     var sampleRactive = new Ractive({
       el: 'ractiveDiv',
@@ -12,8 +10,6 @@ define([ 'ractive', 'rv!../ractive/template'], function ( Ractive, html) {
 	        "properties": {
 	                "kind": "state",
 	                "state": "nc",
-	                "stroke": "#fc4353",
-	                "stroke-width": 5
 	        },
 	        "features": [
 	                {"type":"Feature","bbox":[-79.5437,35.8446,-79.2370,36.2499],"properties":{"kind":"county","name":"Alamance","state":"nc","center":[-79.3903,36.0475],"centroid":[-79.3960,36.0428]},"geometry":{"type":"MultiPolygon","coordinates":[[[[-79.5327,36.2499],[-79.2589,36.2444],[-79.2479,35.8775],[-79.2370,35.8446],[-79.5437,35.8446],[-79.5437,35.8994],[-79.5327,36.2390]]]]}},
@@ -327,13 +323,41 @@ define([ 'ractive', 'rv!../ractive/template'], function ( Ractive, html) {
     var csvData = sampleRactive.get("csv");
     var countyData = sampleRactive.get("geo");
 
-    L.mapbox.accessToken = 'pk.eyJ1IjoiZW5heWV0biIsImEiOiJlSi1XNjkwIn0.dU7f-t4JChkr1SR7drAoZg';
-    var map = L.mapbox.map('map', 'mapbox.light').setView([35.646488, -79.666048    ], 8).featureLayer.setGeoJSON(countyData);
 
+    for (counties in countyData.features) {
+    	sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 1);
+    	sampleRactive.set("geo.features["+counties+"].properties.fill", "gainsboro");
+    	sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.1");
+    	sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "0.2");
 
-    for (rows in countyData.features) {
-    	countyData.features[rows].properties["stroke-width"]=1;
+    	for (rows in csvData) {
+    		if ( csvData[rows].CNTY_NM.toUpperCase() === countyData.features[counties].properties.name.toUpperCase() ) {
+    			//console.log(countyData.features[counties].properties);
+    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 1);
+    			sampleRactive.set("geo.features["+counties+"].properties.fill", "red");
+    			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.4");
+    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
+    			sampleRactive.set("geo.features["+counties+"].properties.title", csvData[rows].CNTY_NM);
+    			var descriptionString = "Recipient Count: " + csvData[rows].Recipient_count + " // Claim Count: " + csvData[rows].Claim_Count;
+    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
+    		}
+    	}
     }
+
+
+    L.mapbox.accessToken = 'pk.eyJ1IjoiZW5heWV0biIsImEiOiJlSi1XNjkwIn0.dU7f-t4JChkr1SR7drAoZg';
+
+	// Construct a bounding box for this map that the user cannot
+	// move out of
+	var southWest = L.latLng(33.989276, -84.274813),
+	    northEast = L.latLng(37.274396, -74.881502),
+	    bounds = L.latLngBounds(southWest, northEast);
+
+    var map = L.mapbox.map('map', 'mapbox.light', {maxBounds: bounds,minZoom:5,maxZoom:12}).setView([35.646488, -79.666048    ], 8);
+
+
+	var myLayer = L.mapbox.featureLayer().addTo(map);
+	myLayer.setGeoJSON(countyData.features);
 
     return sampleRactive;
 
