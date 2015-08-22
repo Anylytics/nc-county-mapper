@@ -1511,6 +1511,7 @@ var tmpArray = [];
     				sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
+	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "red");
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
 	    			//sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
