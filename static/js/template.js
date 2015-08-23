@@ -1500,6 +1500,7 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	var tmpArray = [];
 	var colorMin = 1;
 	var colorMax = 320;
+	sampleRactive.set("colorScale",{"colorMin":colorMin,"colorMax":colorMax,"colorsArray":colorsArray});
 	var range = colorMax - colorMin;
 
     for (counties in countyData.features) {
@@ -1527,7 +1528,7 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     				//var colorIndex = Math.round(colorPercentage*8);
     				//sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
     				//sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
-	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 3);
+	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2*csvData[rows].npi_count_ac);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "#c13333");
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
