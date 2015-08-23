@@ -1494,21 +1494,30 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 							"#cb181d",
 							"#99000d"
 						];
-var tmpArray = [];
+	var tmpArray = [];
+	var colorMin = 1;
+	var colorMax = 320;
+	var range = colorMax - colorMin;
 
     for (counties in countyData.features) {
-    	sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 1);
+    	
+    	sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2);
     	sampleRactive.set("geo.features["+counties+"].properties.fill", "gainsboro");
     	sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.3");
     	sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "0.4");
 
     	for (rows in csvData) {
     		if ( csvData[rows].cnty_nm.toUpperCase() === countyData.features[counties].properties.name.toUpperCase() ) {
+    			var npi = csvData[rows].npi_count;
+    			var colorPercentage = (npi - colorMin)/(range)
+    			var colorIndex = Math.round(colorPercentage*4)
+    			sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
+    			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
     			if (csvData[rows].npi_count_ac>0) {
-    				var colorPercentage = csvData[rows].npi_count_ac/csvData[rows].npi_count;
-    				var colorIndex = Math.round(colorPercentage*8);
-    				sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
-    				sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
+    				//var colorPercentage = csvData[rows].npi_count_ac/csvData[rows].npi_count;
+    				//var colorIndex = Math.round(colorPercentage*8);
+    				//sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
+    				//sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "red");
