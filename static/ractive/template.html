@@ -1,3 +1,8 @@
 <div id="map"></div>
 <div id="legend">
+{{colorScale.colorMin}}
+	{{#each colorScale.colorsArray}}
+		<div class="legendColor" style="background-color:{{this}}"></div>
+	{{/each}}
+{{colorScale.colorMax}}
 </div>

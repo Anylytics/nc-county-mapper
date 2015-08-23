@@ -248,15 +248,6 @@ h1 {
 
 /*   Legend specific   */
 
-#legend {
-	position:fixed;
-	left:30px;
-	top:100px;
-	height:280px;
-	width:191px;
-	z-index: 1000;
-}
-
 #legendImg {
 	padding:10px;
 	height:280px;
@@ -391,3 +382,25 @@ div#call_107PM {
 }
 
 
+
+.legend {
+	background-color:white;
+	margin:10px;
+	padding:20px;
+}
+
+.legendColor {
+	height:30px;
+	width:30px;
+}
+
+#legend {
+    position: fixed;
+    right: 30px;
+    bottom: 50px;
+    z-index: 1000;
+    padding: 20px;
+    text-align:center;
+    font-weight:bold;
+    font-size:1.2em;
+}

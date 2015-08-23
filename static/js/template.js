@@ -1500,8 +1500,8 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	var tmpArray = [];
 	var colorMin = 1;
 	var colorMax = 320;
-	sampleRactive.set("colorScale",{"colorMin":colorMin,"colorMax":colorMax,"colorsArray":colorsArray});
 	var range = colorMax - colorMin;
+	sampleRactive.set("colorScale",{"colorMin":colorMin,"colorMax":colorMax,"colorsArray":colorsArray});
 
     for (counties in countyData.features) {
     	
@@ -1515,7 +1515,6 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     			var npi = csvData[rows].npi_count;
     			var colorPercentage = (npi - colorMin)/(range);
     			var colorIndex = Math.round(colorPercentage*(colorsArray.length-1));
-    			console.log(colorIndex);
     			sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
     			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.8");
     			sampleRactive.set("geo.features["+counties+"].properties.title", csvData[rows].cnty_nm);
@@ -1546,7 +1545,6 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     	}
     }
 
-console.log(tmpArray);
     L.mapbox.accessToken = 'pk.eyJ1IjoiZW5heWV0biIsImEiOiJlSi1XNjkwIn0.dU7f-t4JChkr1SR7drAoZg';
 
 	// Construct a bounding box for this map that the user cannot
