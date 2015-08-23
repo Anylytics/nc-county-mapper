@@ -1484,6 +1484,16 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
       }
     });
 
+	Number.prototype.formatMoney = function(c, d, t){
+		var n = this, 
+	    c = isNaN(c = Math.abs(c)) ? 2 : c, 
+	    d = d == undefined ? "." : d, 
+	    t = t == undefined ? "," : t, 
+	    s = n < 0 ? "-" : "", 
+	    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", 
+	    j = (j = i.length) > 3 ? j % 3 : 0;
+	   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+ 	};
 
     var csvData = sampleRactive.get("csv");
     var countyData = sampleRactive.get("geo");
@@ -1543,6 +1553,7 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			claimPaid = claimPaid.replace(/,/g, '');
 	    			var claimPaid_ac = csvData[rows].claim_paid_amt_ac;
 	    			var claimPaidAmt = parseInt(claimPaid) + parseInt(claimPaid_ac);
+	    			claimPaidAmt = claimPaidAmt.formatMoney(2)
 	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + 
 	    									"\nClaim Count: " + claimCounts + 
 	    									"\nClaim Paid Amount: $"+ claimPaidAmt +"</pre>";
@@ -1554,12 +1565,12 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
 	    			var claimCount = parseInt(csvData[rows].claim_count);
 	    			var claimPaid = csvData[rows].claim_paid_amt;
-	    			claimPaid = claimPaid.substr(1,claimPaid.length-2);	
-	    			claimPaid = claimPaid.replace(/,/g, '');	
-	    			claimPaid = parseInt(claimPaid)
+	    			//claimPaid = claimPaid.substr(1,claimPaid.length-2);	
+	    			//claimPaid = claimPaid.replace(/,/g, '');	
+	    			//claimPaid = parseInt(claimPaid)
     				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient +
     									 	"\nClaim Count: "+ claimCount +
-    									 	"\nClaim Paid Amount: $" + claimPaid + "</pre>";
+    									 	"\nClaim Paid Amount: " + csvData[rows].claim_paid_amt + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     		}
