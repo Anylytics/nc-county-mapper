@@ -1488,14 +1488,15 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     var csvData = sampleRactive.get("csv");
     var countyData = sampleRactive.get("geo");
     var colorsArray = 	[	
-						    "#ffffff",
+						    //"#ffffff",
 							"#e2ecf6",
 							"#bad2ea",
 							"#95b9df",
 							"#6398d0",
 							"#3b7ec4",
 							"#326ba7",
-							"#29588a"
+							"#29588a",
+							"#000066"
 						];
 	var tmpArray = [];
 	var colorMin = 1;
@@ -1534,14 +1535,29 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
 	    			var npiRecipient_ac = csvData[rows].recipient_count_ac;
 	    			var recipientCount = parseInt(npiRecipient) + parseInt(npiRecipient_ac);
-	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + "</pre>";
+	    			var claimCount = csvData[rows].claim_count;
+	    			var claimCount_ac = csvData[rows].claim_count_ac;
+	    			var claimCounts = parseInt(claimCount) + parseInt(claimCount_ac);
+	    			var claimPaid = csvData[rows].claim_paid_amt;
+	    			claimPaid = claimPaid.substr(1,50);
+	    			var claimPaid_ac = csvData[rows].claim_paid_amt_ac;
+	    			var claimPaidAmt = parseInt(claimPaid) + parseInt(claimPaid_ac);
+	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + 
+	    									"\nClaim Count: " + claimCounts + 
+	    									"\nClaim Paid Amount: $"+ claimPaidAmt +"</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
 	    			//sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     			else {
 	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
-    				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient + "</pre>";
+	    			var claimCount = parseInt(csvData[rows].claim_count);
+	    			var claimPaid = csvData[rows].claim_paid_amt;
+	    			claimPaid = claimPaid.substr(1,50);	    			
+	    			//claimPaid = parseInt(claimPaid)
+    				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient +
+    									 	"\nClaim Count: "+ claimCount +
+    									 	"\nClaim Paid Amount: " + claimPaid + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     		}
