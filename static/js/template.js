@@ -1539,7 +1539,8 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var claimCount_ac = csvData[rows].claim_count_ac;
 	    			var claimCounts = parseInt(claimCount) + parseInt(claimCount_ac);
 	    			var claimPaid = csvData[rows].claim_paid_amt;
-	    			claimPaid = claimPaid.substr(1,50);
+	    			claimPaid = claimPaid.substr(1,claimPaid.length-2);	
+	    			claimPaid = claimPaid.replace(/,/g, '');
 	    			var claimPaid_ac = csvData[rows].claim_paid_amt_ac;
 	    			var claimPaidAmt = parseInt(claimPaid) + parseInt(claimPaid_ac);
 	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + 
@@ -1553,11 +1554,12 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
 	    			var claimCount = parseInt(csvData[rows].claim_count);
 	    			var claimPaid = csvData[rows].claim_paid_amt;
-	    			claimPaid = claimPaid.substr(1,50);	    			
-	    			//claimPaid = parseInt(claimPaid)
+	    			claimPaid = claimPaid.substr(1,claimPaid.length-2);	
+	    			claimPaid = claimPaid.replace(/,/g, '');	
+	    			claimPaid = parseInt(claimPaid)
     				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient +
     									 	"\nClaim Count: "+ claimCount +
-    									 	"\nClaim Paid Amount: " + claimPaid + "</pre>";
+    									 	"\nClaim Paid Amount: $" + claimPaid + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     		}
