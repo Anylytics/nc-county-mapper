@@ -1488,11 +1488,14 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     var csvData = sampleRactive.get("csv");
     var countyData = sampleRactive.get("geo");
     var colorsArray = 	[	
-    						"#fff5f0",
-							"#fee0d2",
-							"#ef3b2c",
-							"#cb181d",
-							"#99000d"
+						    "#ffffff",
+							"#e2ecf6",
+							"#bad2ea",
+							"#95b9df",
+							"#6398d0",
+							"#3b7ec4",
+							"#326ba7",
+							"#29588a"
 						];
 	var tmpArray = [];
 	var colorMin = 1;
@@ -1509,22 +1512,27 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     	for (rows in csvData) {
     		if ( csvData[rows].cnty_nm.toUpperCase() === countyData.features[counties].properties.name.toUpperCase() ) {
     			var npi = csvData[rows].npi_count;
-    			var colorPercentage = (npi - colorMin)/(range)
-    			var colorIndex = Math.round(colorPercentage*4)
+    			var colorPercentage = (npi - colorMin)/(range);
+    			var colorIndex = Math.round(colorPercentage*(colorsArray.length-1));
+    			console.log(colorIndex);
     			sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
-    			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
+    			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.8");
+    			sampleRactive.set("geo.features["+counties+"].properties.title", csvData[rows].cnty_nm);
+    			if (csvData[rows].cnty_nm=="") {
+    				sampleRactive.set("geo.features["+counties+"].properties.title", "UNKNOWN");
+    			}
+    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 1);
     			if (csvData[rows].npi_count_ac>0) {
     				//var colorPercentage = csvData[rows].npi_count_ac/csvData[rows].npi_count;
     				//var colorIndex = Math.round(colorPercentage*8);
     				//sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
     				//sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
-	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2);
+	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 3);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
-	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "red");
+	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "#c13333");
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
 	    			//sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
-    			sampleRactive.set("geo.features["+counties+"].properties.title", csvData[rows].cnty_nm);
     		}
     	}
     }
