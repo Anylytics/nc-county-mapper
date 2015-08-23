@@ -1530,15 +1530,18 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2*csvData[rows].npi_count_ac);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "#c13333");
-	    			npiCount = csvData[rows].npi_count + csvData[rows].npi_count_ac;
-	    			recipientCount = csvData[rows].recipient_count + csvData[rows].recipient_count_ac;
-	    			var descriptionString = "<pre> Providers: " + npiCount + "Recipients: " + recipientCount + "</pre>";
+	    			var npiCount = csvData[rows].npi_count + csvData[rows].npi_count_ac;
+	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
+	    			var npiRecipient_ac = csvData[rows].recipient_count_ac;
+	    			var recipientCount = parseInt(npiRecipient) + parseInt(npiRecipient_ac);
+	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
 	    			//sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     			else {
-    				var descriptionString = "<pre> Providers: " + csvData[rows].npi_count + "Recipients: " + csvData[rows].recipient_count + "</pre>";
+	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
+    				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
     			}
     		}
