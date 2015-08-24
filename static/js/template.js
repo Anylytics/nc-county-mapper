@@ -1554,24 +1554,47 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var claimPaid_ac = csvData[rows].claim_paid_amt_ac;
 	    			var claimPaidAmt = parseInt(claimPaid) + parseInt(claimPaid_ac);
 	    			claimPaidAmt = claimPaidAmt.formatMoney(2)
+	    			var providerRecRatio = recipientCount/npiCount;
 	    			var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + recipientCount + 
 	    									"\nClaim Count: " + claimCounts + 
-	    									"\nClaim Paid Amount: $"+ claimPaidAmt +"</pre>";
+	    									"\nClaim Paid Amount: $"+ claimPaidAmt +
+	    									"\nRecipients per Provider: "+ Math.round(providerRecRatio) + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
 	    			//var descriptionString = "Percentage: " + (colorPercentage*100).toFixed(2) + "%";
 	    			//sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
+	    			//CRITERIA FOR SECOND COLORING SCHEME
+	    			if (providerRecRatio > 500 && npiCount < 10){
+	    				//Darker color shading in the county
+	    			}
+	    			else if (providerRecRatio > 200 && npiCount<10){
+	    				//Lighter color shading in the county
+	    			}
+
+
     			}
     			else {
 	    			var npiRecipient = (csvData[rows].recipient_count).replace(/,/g, '');
 	    			var claimCount = parseInt(csvData[rows].claim_count);
 	    			var claimPaid = csvData[rows].claim_paid_amt;
+	    			var npiCount = csvData[rows].npi_count
+	    			var providerRecRatio = parseInt(npiRecipient)/npiCount;
 	    			//claimPaid = claimPaid.substr(1,claimPaid.length-2);	
 	    			//claimPaid = claimPaid.replace(/,/g, '');	
 	    			//claimPaid = parseInt(claimPaid)
     				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient +
     									 	"\nClaim Count: "+ claimCount +
-    									 	"\nClaim Paid Amount: " + csvData[rows].claim_paid_amt + "</pre>";
+    									 	"\nClaim Paid Amount: " + csvData[rows].claim_paid_amt +
+    									 	"\nRecipients per Provider: "+ Math.round(providerRecRatio) + "</pre>";
 	    			sampleRactive.set("geo.features["+counties+"].properties.description", descriptionString);
+
+	    			//CRITERIA FOR SECOND COLOR SCHEME
+	    			if (providerRecRatio > 500 && npiCount < 10){
+	    				//Darker color shading in the county
+	    			}
+	    			else if (providerRecRatio > 200 && npiCount<10){
+	    				//Lighter color shading in the county
+	    			}
+	    			
     			}
     		}
     	}
