@@ -1,5 +1,33 @@
 	// Now we've configured RequireJS, we can load our dependencies and start
-define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html,mapbox) {
+define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ractive, html,mapbox,$) {
+
+	/********CONFIGURABLE VARIABLES******/
+
+	//This variable is the top range of recipient/npi ratio
+	var maxRecipNpiRatio = 1000;
+
+	//Control limits on ratio coloring
+	var maxProviderLimit = 20;
+	var minRatioLimit = 150;
+	var lightShade = "#DE9884";
+	var maxRatioLimit = 400;
+	var darkShade = "#C15B3E";	
+
+	//Override index coloring on ratio with red marker coloring
+	var overRideRatioColoring = true;
+	var showLegend = true;
+
+	//These variables set the default, data-less county styles
+	var defaultStroke = 2;
+	var defaultFill = "gainsboro";
+	var defaultFillOpacity = 0.3;
+	var defaultStrokeOpacity = 0.4;
+
+	//Opacity for active counties with data
+	var activeFillOpacity = 0.8;
+
+
+ 	/******** RACTIVE INIT *********/
 
     var sampleRactive = new Ractive({
       el: 'ractiveDiv',
@@ -1484,6 +1512,8 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
       }
     });
 
+ 	/******** HELPER FUNCTIONS *********/
+
 	Number.prototype.formatMoney = function(c, d, t){
 		var n = this, 
 	    c = isNaN(c = Math.abs(c)) ? 2 : c, 
@@ -1495,10 +1525,61 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
  	};
 
+ 	function stripCommas(takeItOff) {
+ 		return parseInt(takeItOff.toString().replace(/,/g , ""));
+ 	}
+
+ 	function setGeo(featureIndex, property, value) {
+	    sampleRactive.set("geo.features["+featureIndex+"].properties."+property, value);
+ 	}
+
+ 	function buildNpiObj(current_row) {
+ 		tmpObj = {};
+		tmpObj.thisNPI 	= stripCommas(current_row.npi_count);
+		tmpObj.thisREC 	= stripCommas(current_row.recipient_count);
+		tmpObj.thisNPI_AC  = 0;
+		tmpObj.thisREC_AC  = 0;
+		if (current_row.npi_count_ac!=null) {
+			tmpObj.thisNPI_AC 	= stripCommas(current_row.npi_count_ac);
+		}
+		if (current_row.recipient_count_ac!=null) {
+			tmpObj.thisREC_AC 	= stripCommas(current_row.recipient_count_ac);
+		}
+		return tmpObj;
+ 	}
+
+ 	/******** METADATA PRE-PROCESSING & INITIALIZATION *********/
+
+ 	//Read JSON data out of ractive
+ 	/*var csvFile = $("#csvLoad")[0].files;
+ 	$("#csvLoad").change( function() {
+ 		$(document).ready(function() {
+		    $.ajax({
+		        type: "GET",
+		        url: $("#csvLoad")[0].files[0].name,
+		        dataType: "application/vnd.ms-excel",
+		        success: function(data) {console.log(data);}
+		     });
+		});
+ 	})*/
     var csvData = sampleRactive.get("csv");
     var countyData = sampleRactive.get("geo");
+
+	//Build dropdown & push to ractive
+	var dataOptions = 	[
+							{"label":"Provider Count", 				"value":"npi"		},
+							{"label":"Overloaded Counties", 	"value":"recip-npi"	}
+						];
+    sampleRactive.set("dropDown",dataOptions);
+
+    //Listen on dropdown change
+    $("#dropSelect").change( function() {
+    	//Cycle through JSON objects & rebuild map
+    	buildOptions($(this).val());
+    });
+
+    //Build color array & push to ractive
     var colorsArray = 	[	
-						    //"#ffffff",
 							"#e2ecf6",
 							"#bad2ea",
 							"#95b9df",
@@ -1508,36 +1589,155 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 							"#29588a",
 							"#000066"
 						];
-	var tmpArray = [];
-	var colorMin = 1;
-	var colorMax = 320;
-	var range = colorMax - colorMin;
-	sampleRactive.set("colorScale",{"colorMin":colorMin,"colorMax":colorMax,"colorsArray":colorsArray});
 
-    for (counties in countyData.features) {
+    function buildOptions(options) {
+
+    	var optionsObj = {};
+    	optionsObj.name = options;
+
+    	var tmpNpiCount 	= [];
+    	var tmpRecipRatio 	= [];
+
+    	//Build Arrays
+    	for (items in csvData) {
+    		var thisRow 	= csvData[items];
+    		var tmpKpiObj = buildNpiObj(thisRow);
+
+    		tmpNpiCount.push(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC);
+
+    		if ( 	( (tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC) 											< 	maxProviderLimit 	) && 
+    				( (tmpKpiObj.thisREC+tmpKpiObj.thisREC_AC)/(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC)	>	minRatioLimit 		) ) {	
+	    		tmpRecipRatio.push((tmpKpiObj.thisREC+tmpKpiObj.thisREC_AC)/(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC));
+    		}
+
+    	}
+
+    	if (optionsObj.name=="npi") {
+    		optionsObj.rangeMin = Math.min.apply(null, tmpNpiCount);
+    		optionsObj.rangeMax = Math.max.apply(null, tmpNpiCount);
+    	}
+
+    	if (optionsObj.name=="recip-npi") {
+    		optionsObj.rangeMin = Math.min.apply(null, tmpRecipRatio);
+    		optionsObj.rangeMax = Math.max.apply(null, tmpRecipRatio);
+    		if (optionsObj.rangeMax>maxRecipNpiRatio) {
+    			optionsObj.rangeMax=maxRecipNpiRatio;
+    		}
+    		if (overRideRatioColoring) {
+    			showLegend = false;
+    		}
+    	}
+
+    	var colorsObj = setColors(optionsObj);
+    	buildGeo(optionsObj,colorsObj);
+    }
+
+
+	function setColors(options) {
+		var colorMin = options.rangeMin;
+		var colorMax = options.rangeMax;
+		var range = colorMax - colorMin;
+		sampleRactive.set("colorScale",{
+			"colorMin":colorMin,
+			"colorMax":colorMax,
+			"defaultStroke":defaultStroke,
+			"defaultFill":defaultFill,
+			"activeFillOpacity":activeFillOpacity,
+			"defaultFillOpacity":defaultFillOpacity,
+			"defaultStrokeOpacity":defaultStrokeOpacity,
+			"showLegend":showLegend,
+			"currentDropdown":options.name,
+			"colorsArray":colorsArray});
+		return sampleRactive.get("colorScale");
+	}
+
+
+ 	/******** CSV/GEO PROCESSING *********/
+
+ 	function buildGeo(options, colors) {
+
+ 		for (counties in countyData.features) {
+
+ 			//Establish base style for all county objects on map
+ 			setGeo(counties, "stroke-width", 	colors.defaultStroke);
+ 			setGeo(counties, "fill", 			colors.defaultFill);
+ 			setGeo(counties, "fill-opacity", 	colors.defaultFillOpacity);
+ 			setGeo(counties, "stroke-opacity", 	colors.defaultStrokeOpacity);
+
+ 			//Set default data attributes
+ 			setGeo(counties, "title", "NO DATA");
+
+	    	//Cycle through CSV, match on county & update GeoJSON as needed
+	    	for (rows in csvData) {
+
+	    		//Match on csv.cnty_nm to features.properties.name
+	    		if ( csvData[rows].cnty_nm.toUpperCase() === countyData.features[counties].properties.name.toUpperCase() ) {
+
+	    			//CSV data calculations
+		    		var thisRow 	= csvData[rows];
+		    		var kpiObj = buildNpiObj(thisRow);
+		    		var recRatio = (kpiObj.thisREC+kpiObj.thisREC_AC)/(kpiObj.thisNPI+kpiObj.thisNPI_AC);
+			    		if (recRatio>maxRecipNpiRatio) {
+			    			recRatio=maxRecipNpiRatio;
+			    		}
+					var npiRecipient = kpiObj.thisREC+kpiObj.thisREC_AC;
+					var claimCount = parseInt(thisRow.claim_count);
+					var claimPaid = thisRow.claim_paid_amt;
+					var npiCount = kpiObj.thisNPI+kpiObj.thisNPI_AC;
+	    			var currentCounty = countyData.features[counties];
+
+	    			//Dropdown specific processing
+	    			if (options.name=="npi") {
+		    			var npiIndex = (kpiObj.thisNPI+kpiObj.thisNPI_AC-options.rangeMin)/options.rangeMax;
+    					var colorIndex = Math.round(npiIndex*(colors.colorsArray.length-1));
+	    				setGeo(counties, "fill", colors.colorsArray[colorIndex]);
+	    				setGeo(counties, "fill-opacity", colors.activeFillOpactiy);
+	    			}
+	    			if (options.name=="recip-npi") {
+			    		var recRatioIndex = (recRatio-options.rangeMin)/options.rangeMax;
+	    				var colorIndex = Math.round(recRatioIndex*(colors.colorsArray.length-1));
+	    				if ( (recRatio>minRatioLimit) && ((kpiObj.thisNPI+kpiObj.thisNPI_AC)<maxProviderLimit) ) {
+		    				setGeo(counties, "fill", colors.colorsArray[colorIndex]);
+		    				setGeo(counties, "fill-opacity", colors.activeFillOpactiy);
+		    				if (overRideRatioColoring) {
+		    					if (recRatio>minRatioLimit) {
+		    						setGeo(counties, "fill", lightShade);	
+		    					}
+		    					if  (recRatio>maxRatioLimit) {
+		    						setGeo(counties, "fill", darkShade);
+		    						setGeo(counties, "fill-opacity", 1);
+		    					}
+		    				}
+	    				}
+	    			}
+
+    				setGeo(counties, "title", thisRow.cnty_nm);
+    				var descriptionString = "<pre>Providers: " + npiCount + "\nRecipients: " + npiRecipient +
+    									 	"\nCount: "+ claimCount +
+    									 	"\nAmount: " + thisRow.claim_paid_amt +
+    									 	"\nRecipients per Provider: "+ Math.round(recRatio) + "</pre>";
+    				setGeo(counties, "description", descriptionString);
+
+    				if (kpiObj.thisNPI_AC>0) {
+		    			setGeo(counties, "stroke-width", 2*kpiObj.thisNPI_AC);
+		    			setGeo(counties, "stroke-opacity", 1);
+		    			setGeo(counties, "stroke","#c13333");
+
+    				}
+
+	    		}
+
+	    	}
+
+ 		}
+ 		buildMap();
+
+ 	}
+
+    /*for (counties in countyData.features) {
     	
-    	sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2);
-    	sampleRactive.set("geo.features["+counties+"].properties.fill", "gainsboro");
-    	sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.3");
-    	sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "0.4");
 
-    	for (rows in csvData) {
-    		if ( csvData[rows].cnty_nm.toUpperCase() === countyData.features[counties].properties.name.toUpperCase() ) {
-    			var npi = csvData[rows].npi_count;
-    			var colorPercentage = (npi - colorMin)/(range);
-    			var colorIndex = Math.round(colorPercentage*(colorsArray.length-1));
-    			sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
-    			sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.8");
-    			sampleRactive.set("geo.features["+counties+"].properties.title", csvData[rows].cnty_nm);
-    			if (csvData[rows].cnty_nm=="") {
-    				sampleRactive.set("geo.features["+counties+"].properties.title", "UNKNOWN");
-    			}
-    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 1);
     			if (csvData[rows].npi_count_ac>0) {
-    				//var colorPercentage = csvData[rows].npi_count_ac/csvData[rows].npi_count;
-    				//var colorIndex = Math.round(colorPercentage*8);
-    				//sampleRactive.set("geo.features["+counties+"].properties.fill", colorsArray[colorIndex]);
-    				//sampleRactive.set("geo.features["+counties+"].properties.fill-opacity", "0.7");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-width", 2*csvData[rows].npi_count_ac);
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke-opacity", "1");
 	    			sampleRactive.set("geo.features["+counties+"].properties.stroke", "#c13333");
@@ -1578,9 +1778,6 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    			var claimPaid = csvData[rows].claim_paid_amt;
 	    			var npiCount = csvData[rows].npi_count
 	    			var providerRecRatio = parseInt(npiRecipient)/npiCount;
-	    			//claimPaid = claimPaid.substr(1,claimPaid.length-2);	
-	    			//claimPaid = claimPaid.replace(/,/g, '');	
-	    			//claimPaid = parseInt(claimPaid)
     				var descriptionString = "<pre>Providers: " + csvData[rows].npi_count + "\nRecipients: " + npiRecipient +
     									 	"\nClaim Count: "+ claimCount +
     									 	"\nClaim Paid Amount: " + csvData[rows].claim_paid_amt +
@@ -1598,7 +1795,9 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
     			}
     		}
     	}
-    }
+    }*/
+
+ 	/******** MAPBOX FUNCTIONS *********/
 
     L.mapbox.accessToken = 'pk.eyJ1IjoiZW5heWV0biIsImEiOiJlSi1XNjkwIn0.dU7f-t4JChkr1SR7drAoZg';
 
@@ -1608,11 +1807,17 @@ define([ 'ractive', 'rv!../ractive/template','mapbox'], function ( Ractive, html
 	    northEast = L.latLng(37.274396, -74.881502),
 	    bounds = L.latLngBounds(southWest, northEast);
 
-    var map = L.mapbox.map('map', 'mapbox.light', {maxBounds: bounds,minZoom:5,maxZoom:12}).setView([35.646488, -79.666048    ], 8);
+	var mapBoxMap = 'mapbox.light';
 
+    var map = L.mapbox.map('map', mapBoxMap, {maxBounds: bounds,minZoom:5,maxZoom:12}).setView([35.646488, -79.666048    ], 8);
+    var myLayer = L.mapbox.featureLayer().addTo(map);
 
-	var myLayer = L.mapbox.featureLayer().addTo(map);
-	myLayer.setGeoJSON(countyData.features);
+    function buildMap() {
+    	map.removeLayer(myLayer);
+		myLayer = L.mapbox.featureLayer().addTo(map);
+		myLayer.setGeoJSON(countyData.features);
+    }
+
 
     return sampleRactive;
 
