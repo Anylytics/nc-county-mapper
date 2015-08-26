@@ -7,6 +7,11 @@ require.config({
         mapbox: 'lib/mapbox',
         jquery: 'lib/jquery-1.11',
         jqueryui: 'lib/jquery_ui'
+    },
+    shim: {
+    	"opencpu": {
+    		deps: [ "jquery" ]
+    	}
     }
 });
 

@@ -1,30 +1,89 @@
 	// Now we've configured RequireJS, we can load our dependencies and start
 define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ractive, html,mapbox,$) {
 
+
+ 	/******** HELPER FUNCTIONS *********/
+
+	Number.prototype.formatMoney = function(c, d, t){
+		var n = this, 
+	    c = isNaN(c = Math.abs(c)) ? 2 : c, 
+	    d = d == undefined ? "." : d, 
+	    t = t == undefined ? "," : t, 
+	    s = n < 0 ? "-" : "", 
+	    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", 
+	    j = (j = i.length) > 3 ? j % 3 : 0;
+	   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
+ 	};
+
+ 	function stripCommas(takeItOff) {
+ 		return parseInt(takeItOff.toString().replace(/,/g , ""));
+ 	}
+
+ 	function setGeo(featureIndex, property, value) {
+	    sampleRactive.set("geo.features["+featureIndex+"].properties."+property, value);
+ 	}
+
+ 	function buildNpiObj(current_row) {
+ 		tmpObj = {};
+		tmpObj.thisNPI 	= stripCommas(current_row.npi_count);
+		tmpObj.thisREC 	= stripCommas(current_row.recipient_count);
+		tmpObj.thisNPI_AC  = 0;
+		tmpObj.thisREC_AC  = 0;
+		if (current_row.npi_count_ac!=null) {
+			tmpObj.thisNPI_AC 	= stripCommas(current_row.npi_count_ac);
+		}
+		if (current_row.recipient_count_ac!=null) {
+			tmpObj.thisREC_AC 	= stripCommas(current_row.recipient_count_ac);
+		}
+		return tmpObj;
+ 	}
+
+ 	var getUrlParameter = function getUrlParameter(sParam) {
+	    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+	        sURLVariables = sPageURL.split('&'),
+	        sParameterName,
+	        i;
+
+	    for (i = 0; i < sURLVariables.length; i++) {
+	        sParameterName = sURLVariables[i].split('=');
+
+	        if (sParameterName[0] === sParam) {
+	            return sParameterName[1] === undefined ? true : sParameterName[1];
+	        }
+	    }
+	};
+
 	/********CONFIGURABLE VARIABLES******/
+	var configObj = {};
+
+	//Activate Admin panel for admin url parameter
+	configObj.showAdminPanel = false;
+	if (getUrlParameter('admin')=="true") {
+		configObj.showAdminPanel = true;
+	}
 
 	//This variable is the top range of recipient/npi ratio
-	var maxRecipNpiRatio = 1000;
+	configObj.maxRecipNpiRatio = 1000;
 
 	//Control limits on ratio coloring
-	var maxProviderLimit = 20;
-	var minRatioLimit = 150;
-	var lightShade = "#DE9884";
-	var maxRatioLimit = 400;
-	var darkShade = "#C15B3E";	
+	configObj.maxProviderLimit = 20;
+	configObj.minRatioLimit = 150;
+	configObj.lightShade = "#DE9884";
+	configObj.maxRatioLimit = 400;
+	configObj.darkShade = "#C15B3E";	
 
 	//Override index coloring on ratio with red marker coloring
-	var overRideRatioColoring = true;
-	var showLegend = true;
+	configObj.overRideRatioColoring = true;
+	configObj.showLegend = true;
 
 	//These variables set the default, data-less county styles
-	var defaultStroke = 2;
-	var defaultFill = "gainsboro";
-	var defaultFillOpacity = 0.3;
-	var defaultStrokeOpacity = 0.4;
+	configObj.defaultStroke = 2;
+	configObj.defaultFill = "gainsboro";
+	configObj.defaultFillOpacity = 0.3;
+	configObj.defaultStrokeOpacity = 0.4;
 
 	//Opacity for active counties with data
-	var activeFillOpacity = 0.8;
+	configObj.activeFillOpacity = 0.8;
 
 
  	/******** RACTIVE INIT *********/
@@ -1512,42 +1571,6 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
       }
     });
 
- 	/******** HELPER FUNCTIONS *********/
-
-	Number.prototype.formatMoney = function(c, d, t){
-		var n = this, 
-	    c = isNaN(c = Math.abs(c)) ? 2 : c, 
-	    d = d == undefined ? "." : d, 
-	    t = t == undefined ? "," : t, 
-	    s = n < 0 ? "-" : "", 
-	    i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", 
-	    j = (j = i.length) > 3 ? j % 3 : 0;
-	   return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
- 	};
-
- 	function stripCommas(takeItOff) {
- 		return parseInt(takeItOff.toString().replace(/,/g , ""));
- 	}
-
- 	function setGeo(featureIndex, property, value) {
-	    sampleRactive.set("geo.features["+featureIndex+"].properties."+property, value);
- 	}
-
- 	function buildNpiObj(current_row) {
- 		tmpObj = {};
-		tmpObj.thisNPI 	= stripCommas(current_row.npi_count);
-		tmpObj.thisREC 	= stripCommas(current_row.recipient_count);
-		tmpObj.thisNPI_AC  = 0;
-		tmpObj.thisREC_AC  = 0;
-		if (current_row.npi_count_ac!=null) {
-			tmpObj.thisNPI_AC 	= stripCommas(current_row.npi_count_ac);
-		}
-		if (current_row.recipient_count_ac!=null) {
-			tmpObj.thisREC_AC 	= stripCommas(current_row.recipient_count_ac);
-		}
-		return tmpObj;
- 	}
-
  	/******** METADATA PRE-PROCESSING & INITIALIZATION *********/
 
  	//Read JSON data out of ractive
@@ -1571,11 +1594,22 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
 							{"label":"Overloaded Counties", 	"value":"recip-npi"	}
 						];
     sampleRactive.set("dropDown",dataOptions);
+    sampleRactive.set("config",configObj);
 
     //Listen on dropdown change
     $("#dropSelect").change( function() {
     	//Cycle through JSON objects & rebuild map
-    	buildOptions($(this).val());
+    	if ($(this).val()!="") {
+	    	buildOptions($(this).val());
+    	}
+    });
+
+    sampleRactive.observe("config", function(newvalue) {
+    	//buildOptions($("#dropSelect").val());
+    	if ($("#dropSelect").val()!="") {
+    		buildOptions($("#dropSelect").val());
+    		console.log(newvalue);
+    	}
     });
 
     //Build color array & push to ractive
@@ -1602,11 +1636,12 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
     	for (items in csvData) {
     		var thisRow 	= csvData[items];
     		var tmpKpiObj = buildNpiObj(thisRow);
+			configObj.showLegend = true;
 
     		tmpNpiCount.push(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC);
 
-    		if ( 	( (tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC) 											< 	maxProviderLimit 	) && 
-    				( (tmpKpiObj.thisREC+tmpKpiObj.thisREC_AC)/(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC)	>	minRatioLimit 		) ) {	
+    		if ( 	( (tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC) 											< 	configObj.maxProviderLimit 	) && 
+    				( (tmpKpiObj.thisREC+tmpKpiObj.thisREC_AC)/(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC)	>	configObj.minRatioLimit 		) ) {	
 	    		tmpRecipRatio.push((tmpKpiObj.thisREC+tmpKpiObj.thisREC_AC)/(tmpKpiObj.thisNPI+tmpKpiObj.thisNPI_AC));
     		}
 
@@ -1620,11 +1655,11 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
     	if (optionsObj.name=="recip-npi") {
     		optionsObj.rangeMin = Math.min.apply(null, tmpRecipRatio);
     		optionsObj.rangeMax = Math.max.apply(null, tmpRecipRatio);
-    		if (optionsObj.rangeMax>maxRecipNpiRatio) {
-    			optionsObj.rangeMax=maxRecipNpiRatio;
+    		if (optionsObj.rangeMax>configObj.maxRecipNpiRatio) {
+    			optionsObj.rangeMax=configObj.maxRecipNpiRatio;
     		}
-    		if (overRideRatioColoring) {
-    			showLegend = false;
+    		if (configObj.overRideRatioColoring) {
+    			configObj.showLegend = false;
     		}
     	}
 
@@ -1638,14 +1673,14 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
 		var colorMax = options.rangeMax;
 		var range = colorMax - colorMin;
 		sampleRactive.set("colorScale",{
-			"colorMin":colorMin,
-			"colorMax":colorMax,
-			"defaultStroke":defaultStroke,
-			"defaultFill":defaultFill,
-			"activeFillOpacity":activeFillOpacity,
-			"defaultFillOpacity":defaultFillOpacity,
-			"defaultStrokeOpacity":defaultStrokeOpacity,
-			"showLegend":showLegend,
+			"colorMin":Math.round(colorMin),
+			"colorMax":Math.round(colorMax),
+			"defaultStroke":configObj.defaultStroke,
+			"defaultFill":configObj.defaultFill,
+			"activeFillOpacity":configObj.activeFillOpacity,
+			"defaultFillOpacity":configObj.defaultFillOpacity,
+			"defaultStrokeOpacity":configObj.defaultStrokeOpacity,
+			"showLegend":configObj.showLegend,
 			"currentDropdown":options.name,
 			"colorsArray":colorsArray});
 		return sampleRactive.get("colorScale");
@@ -1677,8 +1712,8 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
 		    		var thisRow 	= csvData[rows];
 		    		var kpiObj = buildNpiObj(thisRow);
 		    		var recRatio = (kpiObj.thisREC+kpiObj.thisREC_AC)/(kpiObj.thisNPI+kpiObj.thisNPI_AC);
-			    		if (recRatio>maxRecipNpiRatio) {
-			    			recRatio=maxRecipNpiRatio;
+			    		if (recRatio>configObj.maxRecipNpiRatio) {
+			    			recRatio=configObj.maxRecipNpiRatio;
 			    		}
 					var npiRecipient = kpiObj.thisREC+kpiObj.thisREC_AC;
 					var claimCount = parseInt(thisRow.claim_count);
@@ -1696,15 +1731,15 @@ define([ 'ractive', 'rv!../ractive/template','mapbox','jquery'], function ( Ract
 	    			if (options.name=="recip-npi") {
 			    		var recRatioIndex = (recRatio-options.rangeMin)/options.rangeMax;
 	    				var colorIndex = Math.round(recRatioIndex*(colors.colorsArray.length-1));
-	    				if ( (recRatio>minRatioLimit) && ((kpiObj.thisNPI+kpiObj.thisNPI_AC)<maxProviderLimit) ) {
+	    				if ( (recRatio>configObj.minRatioLimit) && ((kpiObj.thisNPI+kpiObj.thisNPI_AC)<configObj.maxProviderLimit) ) {
 		    				setGeo(counties, "fill", colors.colorsArray[colorIndex]);
 		    				setGeo(counties, "fill-opacity", colors.activeFillOpactiy);
-		    				if (overRideRatioColoring) {
-		    					if (recRatio>minRatioLimit) {
-		    						setGeo(counties, "fill", lightShade);	
+		    				if (configObj.overRideRatioColoring) {
+		    					if (recRatio>configObj.minRatioLimit) {
+		    						setGeo(counties, "fill", configObj.lightShade);	
 		    					}
-		    					if  (recRatio>maxRatioLimit) {
-		    						setGeo(counties, "fill", darkShade);
+		    					if  (recRatio>configObj.maxRatioLimit) {
+		    						setGeo(counties, "fill", configObj.darkShade);
 		    						setGeo(counties, "fill-opacity", 1);
 		    					}
 		    				}

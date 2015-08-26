@@ -1,9 +1,10 @@
 <div id="map"></div>
 <div class="legend top right">
-	<div class="fileUpload btn btn-primary">
+	<!--<div class="fileUpload btn btn-primary">
 		<span>Upload</span>
 		<input id="csvLoad" type="file" class="upload" accept=".csv"/>
-	</div>
+	</div>-->
+	{{#if dropDown}}
 	<h2>Select a Map Layer</h2>
 	<select id="dropSelect" class="form-control">
 			<option value=""></option>
@@ -11,11 +12,12 @@
 			<option value="{{this.value}}">{{this.label}}</option>
 		{{/each}}
 	</select>
+	{{/if}}
 	<!--{{#if colorScale.currentDropdown=="recip-npi"}}
 		<input type="checkbox" onclick="updateColors(this)"><label for="showColorScale">Show Color Scale</label>
 	{{/if}}-->
 </div>
-{{colorScale.showLegend}}
+
 {{#if colorScale.showLegend}}
 <div class="legend bottom right">
 {{colorScale.colorMin}}
@@ -23,5 +25,14 @@
 		<div class="legendColor" style="background-color:{{this}}"></div>
 	{{/each}}
 {{colorScale.colorMax}}
+</div>
+{{/if}}
+
+{{#if config.showAdminPanel}}
+<div class="legend bottom left" style="text-align:left;">
+<h2>Admin Panel</h2>
+{{#each config}}
+	<input type="string" value="{{this}}" id="{{@key}}"><label for="{{@key}}">{{@key}}</label><br/>
+{{/each}}
 </div>
 {{/if}}
